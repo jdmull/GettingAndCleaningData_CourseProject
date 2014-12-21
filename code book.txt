@@ -1,0 +1,7 @@
+There are for variables in this database:
+activity - a character representation of the activity (character)
+subjectID - the subject's ID (character)
+metric - What type of value was this originally in the database (numeric)
+quantity - the Mean of the original metric grouped by subject and activity (numeric)
+
+This database has 14220 rows.

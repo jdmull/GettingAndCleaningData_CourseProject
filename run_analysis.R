@@ -5,21 +5,24 @@ library("dplyr")
 ## Get the variable descriptions from the features.txt file and expand the descriptions
 getDescriptiveVariableNames<-function(){
   featureLabels<-read.table("UCI HAR DATASET\\features.txt")[,2]
-  featureLabels<-sub("\\(",".",featureLabels)
+  featureLabels<-sub("\\(","",featureLabels)
   featureLabels<-sub("\\,","And",featureLabels)
   featureLabels<-sub("\\)","",featureLabels)
   featureLabels<-sub("\\-m","M",featureLabels)
-  featureLabels<-sub("\\-std",".StandardDeviation.",featureLabels)
-  featureLabels<-sub("\\-bandsEnergyOf-",".EnergyBands.",featureLabels)
-  featureLabels<-sub("Gyro",".Gyroscopic.",featureLabels)
-  featureLabels<-sub("Mag",".Magnitude.",featureLabels)
-  featureLabels<-sub("gravity",".Gravity.",featureLabels)
-  featureLabels<-sub("Freq",".Frequency.",featureLabels)
-  featureLabels<-sub("acc",".Acceleration.",featureLabels)
-  featureLabels<-sub("Acc",".Acceleration.",featureLabels)
-  featureLabels<-sub("Body",".Body.",featureLabels)
-  featureLabels<-sub("angleOf",".AngleBetween.",featureLabels)
-  featureLabels<-sub("\\-",".",featureLabels)
+  featureLabels<-sub("\\-std","StandardDeviation",featureLabels)
+  featureLabels<-sub("\\-bandsEnergyOf-","\\.EnergyBands.",featureLabels)
+  featureLabels<-sub("Gyro","Gyroscopic",featureLabels)
+  featureLabels<-sub("Mag","Magnitude",featureLabels)
+  featureLabels<-sub("gravity","Gravity",featureLabels)
+  featureLabels<-sub("Freq","Frequency",featureLabels)
+  featureLabels<-sub("acc","Acceleration.",featureLabels)
+  featureLabels<-sub("Acc","Acceleration",featureLabels)
+  featureLabels<-sub("angleOf","AngleBetween",featureLabels)
+  featureLabels<-sub("\\-","",featureLabels)
+  featureLabels<-sub("\\..","\\.",featureLabels)
+  featureLabels<-sub("\\..","\\.",featureLabels)
+  featureLabels<-sub("\\..","\\.",featureLabels)
+  featureLabels<-sub("\\..","\\.",featureLabels)  
   featureLabels
 }
 
@@ -52,7 +55,9 @@ readData<-function()
         dtX<-read.table(sfName("X_"), col.names=descriptiveVariableNames)
         ## Extract only the measurements for the mean and standard deviation on each measurement (2)
         dtX<-select(dtX,contains("StandardDeviation"),contains("Mean")) 
-    
+        ##     not selecting an angle measurement to a std or mean just std or mean meansurments
+        dtX<-select(dtX,1:79)
+        
         ## the Y & Subject ID tables had a 1 to 1 match with the rows in the X, so can directly assign the column
         dtX["activity"]<-dtY$description ## names of the activities from the Y and activity_labels tables (3)
         dtX["subjectID"]<-dtSubject$subjectID ## subject ID from the subject table
@@ -66,27 +71,104 @@ readData<-function()
     dtMergedRows
 }
 
-
-
-## 2) Extracts only the measurements on the mean and standard deviation for each measurement. 
-
 ## 5) From the data set in step 4, creates a second, independent tidy data set 
 ##    with the average of each variable for each activity and each subject.
-tidyActivityData<-function(dtMessy){
-  dtTidy<-dtMessys
-  dtTidy
-}
+tidySummaryTable<-function(){
+  dt<-readData()
+  newTable<-data.frame()
+  
+  ## Getting subtotals
+  library("dplyr")
+  library("tidyr")
+  dt<-group_by(dt,activity,subjectID)
+  tidyData<-rbind(
+    gather(summarise(dt,mean(tBodyAccelerationStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicStandardDeviationX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicStandardDeviationY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicStandardDeviationZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyAccelerationJerkMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyGyroscopicMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyGyroscopicJerkMagnitudeStandardDeviation)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tGravityAccelerationMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyAccelerationJerkMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(tBodyGyroscopicJerkMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMeanFrequencyX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMeanFrequencyY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMeanFrequencyZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkMeanFrequencyX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkMeanFrequencyY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationJerkMeanFrequencyZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicMeanX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicMeanY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicMeanZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicMeanFrequencyX)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicMeanFrequencyY)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyGyroscopicMeanFrequencyZ)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyAccelerationMagnitudeMeanFrequency)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyAccelerationJerkMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyAccelerationJerkMagnitudeMeanFrequency)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyGyroscopicMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyGyroscopicMagnitudeMeanFrequency)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyGyroscopicJerkMagnitudeMean)),metricSourceName,mean,3),
+  gather(summarise(dt,mean(fBodyBodyGyroscopicJerkMagnitudeMeanFrequency)),metricSourceName,mean,3) )
+  tidyData
+}  
 
 writeTidyData<-function(dtTidy){
-  dtMessy<-readData()
-  dtTidy<-tidyActivityData(dtMessy())
+  dtTidy<-tidySummaryTable()
   write.table(dtTidy,file="tidyData.txt",row.name=FALSE)
-  writeCodeBook(dtTidy)
 }
 
-writeCodeBook<-function(dt){
-  
-}
 
 ## Please upload the tidy data set created in step 5 of the instructions. 
 ## Please upload your data set as a txt file created with write.table() using row.name=FALSE
